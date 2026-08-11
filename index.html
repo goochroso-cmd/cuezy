@@ -3,7 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CueZy-Web | Professional Web Sampler - Modified</title>
+    <title>CueZy-Web | Professional Web Sampler</title>
+    <!-- PWA / Mobile Settings -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CueZy-Web">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -166,6 +173,7 @@
             overflow: hidden;
             transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
             box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+            touch-action: none;
         }
 
         /* Neon glow states based on status */
@@ -738,6 +746,7 @@
             height: 100%;
             justify-content: space-between;
             border-right: 1px dashed rgba(255, 255, 255, 0.03);
+            touch-action: none;
         }
         .fader-channel:last-child {
             border-right: none;
@@ -1102,6 +1111,15 @@
 
     <!-- JavaScript logic -->
     <script>
+        // Register Service Worker for Offline PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            });
+        }
+
         // --- Database (IndexedDB) Configuration ---
         const DB_NAME = 'CueZyWebDB';
         const DB_VERSION = 1;
@@ -1613,7 +1631,23 @@
                     <div class="pad-progress" id="pad-progress-${padId}"></div>
                 `;
 
-                // Handle MouseDown
+                // Touch Events (High priority / Zero delay for Mobile)
+                padEl.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    handlePadPress(padId);
+                }, { passive: false });
+
+                padEl.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    handlePadRelease(padId);
+                }, { passive: false });
+
+                padEl.addEventListener('touchcancel', (e) => {
+                    e.preventDefault();
+                    handlePadRelease(padId);
+                }, { passive: false });
+
+                // Handle MouseDown (Fallback for Desktop)
                 padEl.addEventListener('mousedown', (e) => {
                     if (e.shiftKey) {
                         selectPad(padId);
@@ -1839,6 +1873,24 @@
 
                 // Cue button trigger logic
                 const cueBtn = channelEl.querySelector(`#fader-cue-${padId}`);
+                
+                // Touch Events
+                cueBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    handlePadPress(padId);
+                }, { passive: false });
+
+                cueBtn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    handlePadRelease(padId);
+                }, { passive: false });
+
+                cueBtn.addEventListener('touchcancel', (e) => {
+                    e.preventDefault();
+                    handlePadRelease(padId);
+                }, { passive: false });
+
+                // Mouse Events (Desktop)
                 cueBtn.addEventListener('mousedown', () => {
                     handlePadPress(padId);
                 });
